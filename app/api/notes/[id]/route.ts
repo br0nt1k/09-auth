@@ -3,11 +3,10 @@ import { api } from "../../api";
 import { cookies } from "next/headers";
 import { isAxiosError } from "axios";
 
-type Props = {
-  params: { id: string }; // Змінено тип, оскільки params не є Promise тут
-};
-
-export async function GET(request: Request, { params }: Props) {
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   const cookieStore = await cookies();
   const { id } = params;
 
@@ -33,7 +32,10 @@ export async function GET(request: Request, { params }: Props) {
   }
 }
 
-export async function DELETE(request: Request, { params }: Props) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   const cookieStore = await cookies();
   const { id } = params;
 
@@ -59,7 +61,10 @@ export async function DELETE(request: Request, { params }: Props) {
   }
 }
 
-export async function PATCH(request: Request, { params }: Props) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   const cookieStore = await cookies();
   const { id } = params;
   const body = await request.json();
