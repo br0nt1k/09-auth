@@ -23,7 +23,8 @@ export async function middleware(request: NextRequest) {
   if (!accessToken) {
     if (refreshToken) {
       const data = await checkServerSession();
-      const setCookie = data.headers["set-cookie"];
+      const headers = data.headers as Record<string, string | string[] | undefined>;
+      const setCookie = headers["set-cookie"];
       if (setCookie) {
         const cookieArray = Array.isArray(setCookie) ? setCookie : [setCookie];
         for (const cookieStr of cookieArray) {

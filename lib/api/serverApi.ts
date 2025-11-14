@@ -85,18 +85,24 @@ export const getMeServer = async (): Promise<User | null> => {
   }
 };
 
-export const checkServerSession = async (): Promise<boolean> => {
+export const checkServerSession = async () => {
+  const cookieStore = await cookies();
+  
   try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get("accessToken")?.value;
-
-    if (accessToken) {
-      return true;
-    }
-
-    return false;
+    const apiRes = await api.get("/auth/session", {
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
+    });
+    
+    return apiRes; 
   } catch (error) {
-    console.error("Error checking server session in middleware:", error);
-    return false;
+    if (isAxiosError(error)) {
+      console.error("Failed to refresh session in middleware:", error.response?.data);
+      return { headers: {}, status: error.response?.status };
+    } else {
+      console.error("Failed to refresh session in middleware:", error);
+      return { headers: {}, status: 500 };
+    }
   }
 };
