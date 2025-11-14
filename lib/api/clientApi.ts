@@ -1,8 +1,7 @@
 import { Note } from "@/types/note";
-import { nextServer } from "./api";
+import { nextServer } from "./api"; 
 import { User } from "@/types/user";
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL + "/api";
 
 export interface NotesResponse {
   notes: Note[];
@@ -42,8 +41,7 @@ export const fetchNotes = async (
   if (categoryId && categoryId !== "All") {
     params.tag = categoryId;
   }
-
-  const response = await nextServer.get<NotesResponse>(`${baseURL}/notes`, {
+  const response = await nextServer.get<NotesResponse>("/notes", {
     params,
   });
 
@@ -52,7 +50,7 @@ export const fetchNotes = async (
 
 export const createNote = async (newNoteData: NewNoteData): Promise<Note> => {
   const response = await nextServer.post<Note>(
-    `${baseURL}/notes`,
+    "/notes",
     newNoteData,
     {}
   );
@@ -60,18 +58,18 @@ export const createNote = async (newNoteData: NewNoteData): Promise<Note> => {
 };
 
 export const deleteNote = async (noteId: string): Promise<Note> => {
-  const response = await nextServer.delete<Note>(`${baseURL}/notes/${noteId}`);
+  const response = await nextServer.delete<Note>(`/notes/${noteId}`);
   return response.data;
 };
 
 export const fetchNoteById = async (noteId: string): Promise<Note> => {
-  const response = await nextServer.get<Note>(`${baseURL}/notes/${noteId}`);
+  const response = await nextServer.get<Note>(`/notes/${noteId}`);
   return response.data;
 };
 
 export const loginUser = async (userData: UserRequest): Promise<User> => {
   const response = await nextServer.post<User>(
-    `${baseURL}/auth/login`,
+    "/auth/login",
     userData
   );
   return response.data;
@@ -79,7 +77,7 @@ export const loginUser = async (userData: UserRequest): Promise<User> => {
 
 export const registerUser = async (userData: UserRequest): Promise<User> => {
   const response = await nextServer.post<User>(
-    `${baseURL}/auth/register`,
+    "/auth/register",
     userData
   );
   return response.data;
@@ -87,25 +85,25 @@ export const registerUser = async (userData: UserRequest): Promise<User> => {
 
 export const logoutUser = async (): Promise<{ message: string }> => {
   const response = await nextServer.post<{ message: string }>(
-    `${baseURL}/auth/logout`
+    "/auth/logout"
   );
   return response.data;
 };
 
 export const editUser = async (user: AuthUserData): Promise<User> => {
-  const response = await nextServer.patch<User>(`${baseURL}/users/me`, user);
+  const response = await nextServer.patch<User>("/users/me", user);
   return response.data;
 };
 
 export const getMe = async (): Promise<User> => {
-  const response = await nextServer.get<User>(`${baseURL}/users/me`);
+  const response = await nextServer.get<User>("/users/me");
   return response.data;
 };
 
 export async function checkSession(): Promise<{ isAuthenticated: boolean }> {
   try {
     const response = await nextServer.get<{ isAuthenticated: boolean }>(
-      `${baseURL}/auth/session`
+      "/auth/session"
     );
     return response.data;
   } catch {

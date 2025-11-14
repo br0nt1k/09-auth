@@ -1,78 +1,102 @@
-import { cookies } from "next/headers";
-import { nextServer } from "./api";
-import { NotesResponse } from "./clientApi";
-import { User } from "@/types/user";
 import { Note } from "@/types/note";
+import { User } from "@/types/user";
+import { api } from "./api"; 
+import { cookies } from "next/headers";
+import { isAxiosError } from "axios";
 
-export const checkServerSession = async () => {
-  // Дістаємо поточні cookie
-  const cookieStore = await cookies();
-  const res = await nextServer.get("/auth/session", {
-    headers: {
-      // передаємо кукі далі
-      Cookie: cookieStore.toString(),
-    },
-  });
-  // Повертаємо повний респонс, щоб middleware мав доступ до нових cookie
-  return res;
-};
+export interface NotesResponse {
+  notes: Note[];
+  totalPages: number;
+}
 
-export const fetchUserProfile = async () => {
-  const cookieStore = await cookies();
-  const response = await nextServer.get<User>("/users/me", {
-    headers: {
-      Cookie: cookieStore.toString(),
-    },
-  });
-  return response.data;
-};
 
 export const fetchNotesServer = async (
   search: string,
   page: number,
   categoryId?: string
-): Promise<NotesResponse> => {
-  const params: Record<string, string | number> = { page };
-  if (search) {
-    params.search = search;
-  }
-
-  if (categoryId && categoryId !== "All") {
-    params.tag = categoryId;
-  }
-
+): Promise<NotesResponse | null> => {
   const cookieStore = await cookies();
+  const params: Record<string, string | number> = { page, perPage: 12 };
+  if (search) params.search = search;
+  if (categoryId && categoryId !== "All") params.tag = categoryId;
 
-  const response = await nextServer.get<NotesResponse>("/notes", {
-    params,
-    headers: {
-      Cookie: cookieStore.toString(),
-    },
-  });
-
-  return response.data;
+  try {
+    const response = await api.get<NotesResponse>("/notes", {
+      params,
+      headers: { Cookie: cookieStore.toString() },
+    });
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        return null; 
+      }
+      console.error("Axios error fetching notes (server):", error.response?.data);
+    } else {
+      console.error("Unexpected error fetching notes (server):", error);
+    }
+    return null;
+  }
 };
 
-export const getMeServer = async () => {
+export const fetchNoteByIdServer = async (noteId: string): Promise<Note | null> => {
   const cookieStore = await cookies();
-
-  const response = await nextServer.get<User>("/users/me", {
-    headers: {
-      Cookie: cookieStore.toString(),
-    },
-  });
-
-  return response.data;
+  try {
+    const response = await api.get<Note>(`/notes/${noteId}`, {
+      headers: { Cookie: cookieStore.toString() },
+    });
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error) && error.response?.status === 404) {
+      return null; 
+    }
+    if (isAxiosError(error)) {
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        return null;
+      }
+      console.error("Axios error fetching note (server):", error.response?.data);
+    } else {
+      console.error("Unexpected error fetching note (server):", error);
+    }
+    return null;
+  }
 };
 
-export const fetchNoteByIdServer = async (noteId: string): Promise<Note> => {
+
+export const getMeServer = async (): Promise<User | null> => {
   const cookieStore = await cookies();
+  try {
+    const response = await api.get<User>("/users/me", {
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
+    });
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
+            return null;
+        }
+        console.error("Axios error in getMeServer:", error.response?.data);
+    } else {
+        console.error("Unexpected error in getMeServer:", error);
+    }
+    return null;
+  }
+};
 
-  const response = await nextServer.get<Note>(`/notes/${noteId}`, {
-    headers: {
-      Cookie: cookieStore.toString(),
-    },
-  });
+export const checkServerSession = async (): Promise<boolean> => {
+  try {
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get("accessToken")?.value;
 
-  return response.data;
+    if (accessToken) {
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error("Error checking server session in middleware:", error);
+    return false;
+  }
 };

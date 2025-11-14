@@ -5,7 +5,8 @@ import {
 } from "@tanstack/react-query";
 import NoteDetailsClient from "./NoteDetails.client";
 import { Metadata } from "next";
-import { fetchNoteById } from "@/lib/api/clientApi";
+import { fetchNoteByIdServer } from "@/lib/api/serverApi";
+import { notFound } from "next/navigation";
 
 type NoteDetailsProps = {
   params: Promise<{ id: string }>;
@@ -14,27 +15,40 @@ type NoteDetailsProps = {
 export async function generateMetadata({
   params,
 }: NoteDetailsProps): Promise<Metadata> {
-  const noteCategory = await fetchNoteById((await params).id);
+  const { id } = await params;
+  const note = await fetchNoteByIdServer(id);
+
+  if (!note) {
+    return {};
+  }
 
   return {
-    title: `Деталі нотатки: ${noteCategory.title}`,
-    description: `Деталі нотатки: ${noteCategory.title}`,
+    title: `Деталі нотатки: ${note.title}`,
+    description: `Деталі нотатки: ${note.title}`,
     openGraph: {
-      title: `Нотатка - ${noteCategory.title}`,
-      description: `Деталі нотатки: ${noteCategory.title}.`,
-      url: `https://notehub.app/notes/${(await params).id}`,
-      images: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg",
+      title: `Нотатка - ${note.title}`,
+      description: `Деталі нотатки: ${note.title}.`,
+      url: `https://notehub.app/notes/${id}`,
+      images: [
+        { url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg" },
+      ],
     },
   };
 }
 
 const NoteDetails = async ({ params }: NoteDetailsProps) => {
   const queryClient = new QueryClient();
-  const response = await params;
+  const { id } = await params;
+
+  const initialNote = await fetchNoteByIdServer(id);
+
+  if (!initialNote) {
+    return notFound();
+  }
 
   await queryClient.prefetchQuery({
-    queryKey: ["note", response.id],
-    queryFn: () => fetchNoteById(response.id),
+    queryKey: ["note", id],
+    queryFn: () => initialNote,
   });
 
   return (
