@@ -1,91 +1,70 @@
 import { NextResponse } from "next/server";
 import { api } from "../../api";
 import { cookies } from "next/headers";
-import { isAxiosError } from "axios";
 
-export async function GET(
-  request: Request,
-  context: { params: { id: string } }
-) {
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+export async function GET(request: Request, { params }: Props) {
   const cookieStore = await cookies();
-  const { id } = context.params; 
+  const { id } = await params;
+  const { data } = await api(`/notes/${id}`, {
+    headers: {
+      Cookie: cookieStore.toString(),
+    },
+  });
+  if (data) {
+    return NextResponse.json(data);
+  }
+  return NextResponse.json({ error: "Failed to fetch note" }, { status: 500 });
+}
+
+export async function DELETE(request: Request, { params }: Props) {
+  const cookieStore = await cookies();
+  const { id } = await params;
 
   try {
-    const apiRes = await api(`/notes/${id}`, {
+    await api.delete(`/notes/${id}`, {
       headers: {
         Cookie: cookieStore.toString(),
       },
     });
-    return NextResponse.json(apiRes.data, { status: apiRes.status });
-  } catch (error) {
-    if (isAxiosError(error)) {
-      console.error("Axios error fetching note:", error.response?.data);
-      return NextResponse.json(error.response?.data, {
-        status: error.response?.status,
-      });
-    }
-    console.error("Unexpected error fetching note:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { message: "Note deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error deleting note:", error);
+    return NextResponse.json(
+      { error: "Failed to delete note" },
       { status: 500 }
     );
   }
 }
 
-export async function DELETE(
-  request: Request,
-  context: { params: { id: string } }
-) {
+export async function PATCH(request: Request, { params }: Props) {
   const cookieStore = await cookies();
-  const { id } = context.params;
-
-  try {
-    const apiRes = await api.delete(`/notes/${id}`, {
-      headers: {
-        Cookie: cookieStore.toString(),
-      },
-    });
-    return NextResponse.json(apiRes.data, { status: apiRes.status });
-  } catch (error) {
-    if (isAxiosError(error)) {
-      console.error("Axios error deleting note:", error.response?.data);
-      return NextResponse.json(error.response?.data, {
-        status: error.response?.status,
-      });
-    }
-    console.error("Unexpected error deleting note:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PATCH(
-  request: Request,
-  context: { params: { id: string } }
-) {
-  const cookieStore = await cookies();
-  const { id } = context.params;
+  const { id } = await params;
   const body = await request.json();
 
   try {
-    const apiRes = await api.patch(`/notes/${id}`, body, {
+    const { data } = await api.patch(`/notes/${id}`, body, {
       headers: {
         Cookie: cookieStore.toString(),
       },
     });
-    return NextResponse.json(apiRes.data, { status: apiRes.status });
-  } catch (error) {
-    if (isAxiosError(error)) {
-      console.error("Axios error updating note:", error.response?.data);
-      return NextResponse.json(error.response?.data, {
-        status: error.response?.status,
-      });
+    if (data) {
+      return NextResponse.json(data);
     }
-    console.error("Unexpected error updating note:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Failed to update note" },
+      { status: 500 }
+    );
+  } catch (error) {
+    console.log(error);
+    return NextResponse.json(
+      { error: "Failed to update note" },
       { status: 500 }
     );
   }
