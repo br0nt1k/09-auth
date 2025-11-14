@@ -16,7 +16,7 @@ export async function generateMetadata({
   params,
 }: NoteDetailsProps): Promise<Metadata> {
   const { id } = await params;
-  const note = await fetchNoteByIdServer(id);
+  const note = await fetchNoteByIdServer(id); 
 
   if (!note) {
     return {};
@@ -40,7 +40,7 @@ const NoteDetails = async ({ params }: NoteDetailsProps) => {
   const queryClient = new QueryClient();
   const { id } = await params;
 
-  const initialNote = await fetchNoteByIdServer(id);
+  const initialNote = await fetchNoteByIdServer(id); 
 
   if (!initialNote) {
     return notFound();
@@ -48,7 +48,7 @@ const NoteDetails = async ({ params }: NoteDetailsProps) => {
 
   await queryClient.prefetchQuery({
     queryKey: ["note", id],
-    queryFn: () => initialNote,
+    queryFn: () => fetchNoteByIdServer(id),
   });
 
   return (
