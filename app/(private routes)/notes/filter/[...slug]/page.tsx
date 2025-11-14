@@ -1,4 +1,8 @@
-// import { fetchNotes } from "@/lib/api/clientApi";
+import {
+  QueryClient,
+  dehydrate,
+  HydrationBoundary,
+} from "@tanstack/react-query";
 import NotesClient from "./Notes.client";
 import { Metadata } from "next";
 import { fetchNotesServer } from "@/lib/api/serverApi";
@@ -33,11 +37,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 const NotesByCategory = async ({ params }: Props) => {
   const { slug } = await params;
   const category = slug[0] === "all" ? undefined : slug[0];
-  const data = await fetchNotesServer("", 1, category);
+  
+  const queryClient = new QueryClient();
+
+  const queryKey = ["notes", "", 1, category];
+
+  await queryClient.prefetchQuery({
+    queryKey: queryKey,
+    queryFn: () => fetchNotesServer("", 1, category),
+  });
+
+  const dehydratedState = dehydrate(queryClient);
 
   return (
     <div>
-      <NotesClient initialData={data} tag={category} />
+      <HydrationBoundary state={dehydratedState}>
+        <NotesClient tag={category} />
+      </HydrationBoundary>
     </div>
   );
 };
