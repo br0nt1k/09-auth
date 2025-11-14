@@ -5,7 +5,10 @@ import { getMeServer } from "@/lib/api/serverApi";
 import { Metadata } from "next";
 
 export const generateMetadata = async (): Promise<Metadata> => {
-  const { username, avatar } = await getMeServer();
+  const user = await getMeServer();
+
+  const username = user?.username || "Profile"; 
+  const avatar = user?.avatar || "/default-avatar.jpg"; 
 
   return {
     title: username,
@@ -18,7 +21,7 @@ export const generateMetadata = async (): Promise<Metadata> => {
       siteName: "NoteHub",
       images: [
         {
-          url: avatar || "/default-avatar.jpg",
+          url: avatar,
           width: 1200,
           height: 630,
           alt: "NoteHub App",
@@ -30,7 +33,7 @@ export const generateMetadata = async (): Promise<Metadata> => {
       card: "summary_large_image",
       title: username,
       description: `profile of ${username}`,
-      images: [avatar || "/default-avatar.jpg"],
+      images: [avatar],
     },
   };
 };
@@ -53,7 +56,7 @@ const ProfilePage = async () => {
         </div>
         <div className={css.avatarWrapper}>
           <Image
-            src={user?.avatar || "/default-avatar.jpg"}
+            src={user?.avatar || "/default-avatar.jpg"} 
             alt="User Avatar"
             width={120}
             height={120}
@@ -61,8 +64,8 @@ const ProfilePage = async () => {
           />
         </div>
         <div className={css.profileInfo}>
-          <p>Username: {user.username || "Guest"}</p>
-          <p>Email: {user.email || "Guest@example.com"}</p>
+          <p>Username: {user?.username || "Guest"}</p>
+          <p>Email: {user?.email || "Guest@example.com"}</p>
         </div>
       </div>
     </main>
