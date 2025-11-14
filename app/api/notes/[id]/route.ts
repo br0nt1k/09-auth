@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { api } from "../../api";
 import { cookies } from "next/headers";
 import { isAxiosError } from "axios";
 
 export async function GET(
-  request: NextRequest,
+  request: Request,
   context: { params: { id: string } }
 ) {
   const cookieStore = await cookies();
@@ -33,7 +33,7 @@ export async function GET(
 }
 
 export async function DELETE(
-  request: NextRequest,
+  request: Request,
   context: { params: { id: string } }
 ) {
   const cookieStore = await cookies();
@@ -62,11 +62,11 @@ export async function DELETE(
 }
 
 export async function PATCH(
-  request: NextRequest,
+  request: Request,
   context: { params: { id: string } }
 ) {
   const cookieStore = await cookies();
-  const { id } = context.params; 
+  const { id } = context.params;
   const body = await request.json();
 
   try {
